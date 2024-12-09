@@ -24,7 +24,7 @@
             <div class="img">
                 <!-- Elementos dinámicos para mostrar imágenes o videos -->
                 <img id="displayImage" src="" alt="Visualización de Imagen" style="width: 945px; height: 570px; display: none;">
-                <video id="displayVideo" controls style="width: 945px; height: 570px; display: none;">
+                <video id="displayVideo" controls autoplay style="width: 945px; height: 570px; display: none;">
                     <source id="videoSource" src="" type="video/mp4">
                     Tu navegador no soporta el elemento de video.
                 </video>
@@ -32,7 +32,6 @@
             <div class="group-5">
                 <!-- Botón con imagen para cargar archivo -->
                 <button class="wrapper-9" onclick="document.getElementById('fileInput').click()">
-                    <img src="static/images/upload_icon.png" style="width: 50px; height: 50px;">
                 </button>
                 <!-- Input oculto -->
                 <form action="/cargar_archivo" method="POST" enctype="multipart/form-data" style="display: none;" id="uploadForm">
@@ -59,15 +58,17 @@
             <div class="wrapper-5"><div class="wrapper-6"></div></div>
             <div class="pic-6"></div>
             <div class="wrapper-7">
-                <button class="box-5" onclick="accionBoton('activar_camara')">
+                <button class="box-5" onclick="accionBoton('guardar_captura')">
                     <div class="group-4"><span class="text-8"></span></div>
                 </button>
             </div>
             <div class="box-6">
-                <button class="box-7" onclick="accionBoton('guardar_captura')">
-                    <div class="wrapper-8"><span class="text-9"></span></div>
+                <button class="box-7" onclick="activarCamara()">
+                    <div class="wrapper-8">
+                    </div>
                 </button>
             </div>
+                
             <div class="img-3"></div>
             <div class="pic-7"></div>
             <div class="group-6">
@@ -109,11 +110,17 @@
 
                 if (data.type === "image") {
                     imageElement.src = data.path;
+                    // Configura dimensiones específicas
+                    videoElement.style.width = "945px";
+                    videoElement.style.height = "570px";
                     imageElement.style.display = "block";
                     videoElement.style.display = "none";
                 } else if (data.type === "video") {
                     videoSource.src = data.path;
                     videoElement.load();
+                    // Configura dimensiones específicas
+                    videoElement.style.width = "945px";
+                    videoElement.style.height = "570px";
                     videoElement.style.display = "block";
                     imageElement.style.display = "none";
                 } else {
@@ -129,6 +136,31 @@
                 .then(response => response.json())
                 .then(data => console.log(data))
                 .catch(error => console.error("Error:", error));
+        }
+
+        function activarCamara() {
+            const videoElement = document.getElementById("displayVideo");
+            const imageElement = document.getElementById("displayImage");
+
+            // Configura dimensiones específicas
+            videoElement.style.width = "945px";
+            videoElement.style.height = "570px";
+
+            // Oculta la imagen y muestra el video
+            imageElement.style.display = "none";
+            videoElement.style.display = "block";
+
+            // Solicita acceso a la cámara
+            navigator.mediaDevices
+                .getUserMedia({ video: true })
+                .then((stream) => {
+                    // Asigna el stream de la cámara al elemento <video>
+                    videoElement.srcObject = stream;
+                })
+                .catch((error) => {
+                    console.error("Error al acceder a la cámara:", error);
+                    alert("No se pudo acceder a la cámara.");
+                });
         }
     </script>
 </body>

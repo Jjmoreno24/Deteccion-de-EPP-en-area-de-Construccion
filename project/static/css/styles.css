@@ -197,6 +197,7 @@ button {
 
 #displayVideo {
     display: none; /* Oculta el video inicialmente */
+    background: #000; /* Fondo negro mientras se carga */
 }
 
 .pic-2 {
