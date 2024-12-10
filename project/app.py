@@ -54,5 +54,22 @@ def cargar_archivo():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/activar_deteccion', methods=['POST'])
+def activar_deteccion():
+    global deteccion_activa
+    deteccion_activa = True  # Activa la detección directamente
+    return jsonify({"status": "Detección activada"})
+
+def procesar_video_frame(frame):
+    if deteccion_activa:
+        results = model(frame, conf=0.25)  # Usa tu modelo para detección
+        for result in results:
+            if hasattr(result, 'boxes'):
+                for box in result.boxes:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)  # Dibuja el cuadro
+    return frame
+
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -93,6 +93,8 @@
     </div>
 
     <script>
+         let cameraStream = null; // Variable global para gestionar el stream de la cámara
+
         // Función para manejar la carga de archivos
         function uploadFile() {
             const form = document.getElementById("uploadForm");
@@ -137,31 +139,87 @@
                 .then(data => console.log(data))
                 .catch(error => console.error("Error:", error));
         }
-
         function activarCamara() {
-            const videoElement = document.getElementById("displayVideo");
-            const imageElement = document.getElementById("displayImage");
+                const videoElement = document.getElementById("displayVideo");
+                const imageElement = document.getElementById("displayImage");
 
-            // Configura dimensiones específicas
-            videoElement.style.width = "945px";
-            videoElement.style.height = "570px";
+                // Oculta la imagen y muestra el video
+                imageElement.style.display = "none";
+                videoElement.style.display = "block";
 
-            // Oculta la imagen y muestra el video
-            imageElement.style.display = "none";
-            videoElement.style.display = "block";
+                // Detener cualquier stream anterior
+                detenerStream();
 
-            // Solicita acceso a la cámara
-            navigator.mediaDevices
-                .getUserMedia({ video: true })
-                .then((stream) => {
-                    // Asigna el stream de la cámara al elemento <video>
-                    videoElement.srcObject = stream;
-                })
-                .catch((error) => {
-                    console.error("Error al acceder a la cámara:", error);
-                    alert("No se pudo acceder a la cámara.");
-                });
-        }
+                // Solicita acceso a la cámara
+                navigator.mediaDevices
+                    .getUserMedia({ video: true })
+                    .then((stream) => {
+                        cameraStream = stream; // Asigna el stream de la cámara a la variable global
+                        videoElement.srcObject = stream; // Usa el stream como fuente del video
+                        videoElement.play(); // Inicia la transmisión de la cámara
+                    })
+                    .catch((error) => {
+                        console.error("Error al acceder a la cámara:", error);
+                        alert("No se pudo acceder a la cámara.");
+                    });
+            }
+
+            function reproducirVideo(path) {
+                const videoElement = document.getElementById("displayVideo");
+                const imageElement = document.getElementById("displayImage");
+
+                // Detener cualquier stream de la cámara
+                detenerStream();
+
+                // Oculta la imagen y muestra el video
+                imageElement.style.display = "none";
+                videoElement.style.display = "block";
+
+                // Limpia cualquier stream asignado al video
+                videoElement.srcObject = null;
+
+                // Carga el video
+                videoElement.src = path;
+                videoElement.load();
+                videoElement.play(); // Reproduce el video
+            }
+
+            function mostrarImagen(path) {
+                const videoElement = document.getElementById("displayVideo");
+                const imageElement = document.getElementById("displayImage");
+
+                // Detener cualquier stream de la cámara
+                detenerStream();
+
+                // Oculta el video y muestra la imagen
+                videoElement.style.display = "none";
+                imageElement.style.display = "block";
+                imageElement.src = path;
+            }
+
+            function detenerStream() {
+                // Detener el stream de la cámara si está activo
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach((track) => track.stop());
+                    cameraStream = null; // Limpia la referencia al stream
+                }
+
+                // Limpia el video
+                const videoElement = document.getElementById("displayVideo");
+                videoElement.srcObject = null;
+                videoElement.src = ""; // Vacía la fuente del video
+                videoElement.pause(); // Asegúrate de pausar el video
+            }
+            function activarDeteccion() {
+    fetch("/activar_deteccion", { method: "POST" })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.status); // Informa al usuario que la detección se activó
+            console.log(data.status);
+        })
+        .catch(error => console.error("Error al activar detección:", error));
+}
+
     </script>
 </body>
 </html>
