@@ -82,7 +82,7 @@
                 </button>
             </div>
             <div class="box-9">
-                <button class="wrapper-b" onclick="accionBoton('activar_deteccion')">
+                <button class="wrapper-b" onclick="activarDetecciones()">
                     <div class="wrapper-c"><span class="text-d"></span></div>
                 </button>
             </div>
@@ -210,15 +210,36 @@
                 videoElement.src = ""; // Vacía la fuente del video
                 videoElement.pause(); // Asegúrate de pausar el video
             }
-            function activarDeteccion() {
-    fetch("/activar_deteccion", { method: "POST" })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.status); // Informa al usuario que la detección se activó
-            console.log(data.status);
-        })
-        .catch(error => console.error("Error al activar detección:", error));
-}
+           
+            function activarDetecciones() {
+                fetch("/activar_deteccion", { method: "POST" })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.status);
+                        const isActivated = data.status.includes("activada");
+
+                        if (isActivated) {
+                            console.log("Detecciones activadas.");
+                            if (document.getElementById("displayImage").style.display === "block") {
+                                fetch("/procesar_imagen", { method: "POST" })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.path) {
+                                            document.getElementById("displayImage").src = data.path;
+                                        }
+                                    });
+                            } else if (document.getElementById("displayVideo").style.display === "block") {
+                                document.getElementById("displayVideo").src = "/video_feed"; // Muestra el stream procesado
+                            }
+                        } else {
+                            console.log("Detecciones desactivadas.");
+                            if (document.getElementById("displayVideo").style.display === "block") {
+                                document.getElementById("displayVideo").src = ""; // Detiene el stream si está activo
+                            }
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+            }
 
     </script>
 </body>
