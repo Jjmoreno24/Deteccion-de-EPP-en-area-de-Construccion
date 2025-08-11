@@ -7,33 +7,87 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <!-- Partículas de fondo -->
-    <div class="particles" id="particles"></div>
-
-    <!-- Header -->
-    <div class="header fade-in">
-        🛡️ Sistema de Detección EPP y Reconocimiento Facial
-    </div>
-
-    <!-- Container principal -->
-    <div class="main-container fade-in">
-        <!-- Panel izquierdo - Estados EPP -->
-        <div class="side-panel">
-            <div class="epp-status" id="statusCasco">
-                <span class="epp-icon">⛑️</span>
-                <div class="epp-text">CASCO<br>NO DETECTADO</div>
+    <!-- Header Corporativo -->
+    <header class="header">
+        <div class="header-title">
+            🛡️ Sistema de Detección EPP y Reconocimiento Facial
+        </div>
+        <div class="header-controls">
+            <div class="dropdown">
+                <div class="header-btn" id="menuBtn" title="Menú">
+                    ☰
+                </div>
+                <div class="dropdown-content">
+                    <div class="dropdown-item disabled" id="addPersonBtn">
+                        👤 Agregar Persona
+                    </div>
+                    <div class="dropdown-item" id="viewExcelBtn">
+                        📊 Ver Registros
+                    </div>
+                    <div class="dropdown-item" id="exportDataBtn">
+                        📤 Exportar Datos
+                    </div>
+                </div>
             </div>
-            <div class="epp-status" id="statusGafas">
-                <span class="epp-icon">🥽</span>
-                <div class="epp-text">GAFAS<br>NO DETECTADAS</div>
+            <div class="header-btn" id="refreshBtn" title="Refrescar Aplicación">
+                🔄
             </div>
-            <div class="epp-status" id="statusChaleco">
-                <span class="epp-icon">🦺</span>
-                <div class="epp-text">CHALECO<br>NO DETECTADO</div>
+        </div>
+    </header>
+
+    <!-- Container Principal -->
+    <div class="main-container">
+        <!-- Panel Izquierdo - Estados EPP y Cumplimiento -->
+        <div class="left-panel">
+            <!-- Grid de Estados EPP (4 elementos) -->
+            <div class="epp-grid">
+                <div class="epp-status" id="statusCasco">
+                    <span class="epp-icon">⛑️</span>
+                    <div class="epp-text">CASCO<br>NO DETECTADO</div>
+                </div>
+                <div class="epp-status" id="statusGafas">
+                    <span class="epp-icon">🥽</span>
+                    <div class="epp-text">GAFAS<br>NO DETECTADAS</div>
+                </div>
+                <div class="epp-status" id="statusChaleco">
+                    <span class="epp-icon">🦺</span>
+                    <div class="epp-text">CHALECO<br>NO DETECTADO</div>
+                </div>
+                <div class="epp-status" id="statusGuantes">
+                    <span class="epp-icon">🧤</span>
+                    <div class="epp-text">GUANTES<br>NO DETECTADOS</div>
+                </div>
+            </div>
+
+            <!-- Gráfico Circular de Cumplimiento EPP -->
+            <div class="compliance-section">
+                <h3 class="compliance-title">Cumplimiento de EPP</h3>
+                <div class="circular-progress">
+                    <svg width="140" height="140" class="progress-ring">
+                        <circle cx="70" cy="70" r="60" class="progress-ring-bg"></circle>
+                        <circle cx="70" cy="70" r="60" class="progress-ring-fill" id="progressCircle" 
+                                stroke-dasharray="0 377" stroke-dashoffset="0"></circle>
+                    </svg>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+                <div class="progress-subtitle">4 elementos EPP monitoreados</div>
+            </div>
+
+            <!-- Registro de Actividad -->
+            <div class="activity-section">
+                <h3 class="activity-title">
+                    📋 Registro de Actividad
+                </h3>
+                <div class="activity-log" id="activityLog">
+                    <div class="activity-item">
+                        <div class="activity-time">--:--</div>
+                        <div class="activity-message">Sistema iniciado - Esperando detección</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Panel central - Video -->
+        <!-- Panel Central - Video -->
         <div class="center-panel">
             <div class="status-indicators">
                 <div class="status-dot" id="detectionIndicator" title="Detección EPP"></div>
@@ -45,32 +99,86 @@
                 <div class="placeholder" id="placeholder">
                     <div class="placeholder-icon">📹</div>
                     <div>Área de visualización de imágenes</div>
-                    <div style="font-size: 14px; opacity: 0.7; margin-top: 10px;">
+                    <div class="placeholder-subtitle">
                         Cargue un archivo o active la cámara para comenzar
                     </div>
                 </div>
             </div>
+
+            <!-- Panel de Información de Detección -->
+            <div class="detection-info">
+                <div class="detection-status">
+                    <div class="detection-icon" id="detectionIcon">👤</div>
+                    <div>
+                        <div class="detection-text" id="detectionText">Esperando detección</div>
+                        <div class="detection-time" id="detectionTime">--:-- Sistema en espera</div>
+                    </div>
+                </div>
+                <div class="status-indicators">
+                    <div class="status-dot" id="cameraStatus" title="Estado de Cámara"></div>
+                </div>
+            </div>
         </div>
 
-        <!-- Panel derecho - Estados EPP adicionales -->
-        <div class="side-panel">
-            <div class="epp-status" id="statusPersona">
-                <span class="epp-icon">👤</span>
-                <div class="epp-text">PERSONA<br>NO DETECTADA</div>
+        <!-- Panel Derecho - Métricas y Estadísticas -->
+        <div class="right-panel">
+            <!-- Métricas Generales -->
+            <div class="metrics-card">
+                <h3 class="metrics-title">Métricas del Sistema</h3>
+                <div class="metric-item">
+                    <span class="metric-label">Personas Detectadas</span>
+                    <span class="metric-value" id="totalPersons">0</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">EPP Completo</span>
+                    <span class="metric-value" id="completeEPP">0</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Incidencias</span>
+                    <span class="metric-value" id="incidents">0</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Tiempo Activo</span>
+                    <span class="metric-value" id="activeTime">00:00:00</span>
+                </div>
             </div>
-            <div class="epp-status" id="statusGuantes">
-                <span class="epp-icon">🧤</span>
-                <div class="epp-text">GUANTES<br>NO DETECTADOS</div>
+
+            <!-- Últimas Detecciones -->
+            <div class="metrics-card">
+                <h3 class="metrics-title">Últimas Detecciones</h3>
+                <div id="recentDetections">
+                    <div class="metric-item">
+                        <span class="metric-label">Sin detecciones recientes</span>
+                        <span class="metric-value">--:--</span>
+                    </div>
+                </div>
             </div>
-            <div class="epp-status" id="statusSafe">
-                <span class="epp-icon">✅</span>
-                <div class="epp-text">SEGURO<br>NO CUMPLE</div>
+
+            <!-- Estado del Sistema -->
+            <div class="metrics-card">
+                <h3 class="metrics-title">Estado del Sistema</h3>
+                <div class="metric-item">
+                    <span class="metric-label">Cámara</span>
+                    <span class="metric-value" id="cameraState">Inactiva</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Detección EPP</span>
+                    <span class="metric-value" id="detectionState">Inactiva</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Reconocimiento</span>
+                    <span class="metric-value" id="recognitionState">Inactivo</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Modelo</span>
+                    <span class="metric-value" id="modelState">Cargado</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Panel de controles -->
-    <div class="controls-panel fade-in">
+    <!-- Panel de Controles -->
+    <div class="controls-panel">
         <div class="controls-container">
             <!-- Botón 1: Cargar archivo -->
             <div class="control-btn" id="btnLoad" title="Cargar archivo de imagen o video">
@@ -82,7 +190,7 @@
             <!-- Botón 2: Abrir Excel -->
             <div class="control-btn" id="btnExcel" title="Abrir registro de asistencia">
                 <img src="{{ url_for('static', filename='images/color.png') }}" alt="Excel" class="btn-icon">
-                <div class="btn-label">Excel</div>
+                <div class="btn-label">Registros</div>
             </div>
             
             <!-- Botón 3: Reconocimiento facial -->

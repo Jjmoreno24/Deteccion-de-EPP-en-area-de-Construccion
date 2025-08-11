@@ -197,15 +197,17 @@ def procesar_frame(frame):
         try:
             results = model(frame_copy, conf=0.25)
             
-            # Actualizar estados EPP
+            # Actualizar estados EPP (solo 4 elementos)
             state.epp_status['casco'] = is_class_detected(results, 0)
             state.epp_status['chaleco'] = is_class_detected(results, 1)
             state.epp_status['gafas'] = is_class_detected(results, 2)
             state.epp_status['guantes'] = is_class_detected(results, 3)
             state.epp_status['persona'] = is_class_detected(results, 4)
-            state.epp_status['safe'] = (state.epp_status['casco'] and 
-                                      state.epp_status['gafas'] and 
-                                      state.epp_status['chaleco'])
+            
+            # Calcular cumplimiento (sin incluir persona en el cálculo)
+            epp_count = sum([state.epp_status['casco'], state.epp_status['chaleco'], 
+                           state.epp_status['gafas'], state.epp_status['guantes']])
+            state.epp_status['safe'] = epp_count == 4
             
             # Dibujar detecciones
             frame_copy = dibujar_detecciones(frame_copy, results)

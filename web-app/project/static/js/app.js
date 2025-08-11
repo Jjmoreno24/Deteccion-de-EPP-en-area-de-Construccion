@@ -1,36 +1,49 @@
 // ====== VARIABLES GLOBALES ======
 let detectionActive = false;
 let recognitionActive = false;
-let currentSource = null; // 'camera', 'image', 'video', null
+let currentSource = null;
 let streamActive = false;
+let systemStartTime = new Date();
+let detectionCount = {
+    total: 0,
+    complete: 0,
+    incidents: 0
+};
 
 // Referencias a elementos DOM
 const videoFeed = document.getElementById('videoFeed');
 const placeholder = document.getElementById('placeholder');
 const fileInput = document.getElementById('fileInput');
 
-// Estados EPP
+// Estados EPP (solo 4 elementos)
 const eppElements = {
     casco: document.getElementById('statusCasco'),
     gafas: document.getElementById('statusGafas'),
     chaleco: document.getElementById('statusChaleco'),
-    persona: document.getElementById('statusPersona'),
-    guantes: document.getElementById('statusGuantes'),
-    safe: document.getElementById('statusSafe')
+    guantes: document.getElementById('statusGuantes')
 };
 
 // Indicadores de estado
 const detectionIndicator = document.getElementById('detectionIndicator');
 const recognitionIndicator = document.getElementById('recognitionIndicator');
+const cameraStatus = document.getElementById('cameraStatus');
+
+// Elementos del gráfico circular
+const progressCircle = document.getElementById('progressCircle');
+const progressText = document.getElementById('progressText');
+
+// Elementos de información
+const detectionIcon = document.getElementById('detectionIcon');
+const detectionText = document.getElementById('detectionText');
+const detectionTime = document.getElementById('detectionTime');
+const activityLog = document.getElementById('activityLog');
 
 // Configuración de mensajes para cada EPP
 const eppLabels = {
     casco: { detected: 'CASCO<br>DETECTADO', notDetected: 'CASCO<br>NO DETECTADO' },
     gafas: { detected: 'GAFAS<br>DETECTADAS', notDetected: 'GAFAS<br>NO DETECTADAS' },
     chaleco: { detected: 'CHALECO<br>DETECTADO', notDetected: 'CHALECO<br>NO DETECTADO' },
-    persona: { detected: 'PERSONA<br>DETECTADA', notDetected: 'PERSONA<br>NO DETECTADA' },
-    guantes: { detected: 'GUANTES<br>DETECTADOS', notDetected: 'GUANTES<br>NO DETECTADOS' },
-    safe: { detected: 'CUMPLE<br>EPP COMPLETO', notDetected: 'NO CUMPLE<br>EPP FALTANTE' }
+    guantes: { detected: 'GUANTES<br>DETECTADOS', notDetected: 'GUANTES<br>NO DETECTADOS' }
 };
 
 // Configuración de endpoints para Flask
@@ -43,6 +56,8 @@ const API_ENDPOINTS = {
     startCamera: '/start_camera',
     stopCamera: '/stop_camera',
     getDetectionStatus: '/get_detection_status',
+    resetSystem: '/reset_system',
+    getSystemStats: '/get_system_stats',
     videoFeed: '/video_feed'
 };
 
@@ -52,9 +67,12 @@ const API_ENDPOINTS = {
  * Actualiza los estados visuales de EPP
  */
 function updateEPPStatus(status) {
-    Object.keys(status).forEach(key => {
+    let detectedCount = 0;
+    const totalEPP = 4; // Solo 4 elementos EPP
+    
+    Object.keys(eppElements).forEach(key => {
         const element = eppElements[key];
-        const detected = status[key];
+        const detected = status[key] || false;
         
         if (element && eppLabels[key]) {
             const textElement = element.querySelector('.epp-text');
@@ -62,14 +80,124 @@ function updateEPPStatus(status) {
                 textElement.innerHTML = detected ? eppLabels[key].detected : eppLabels[key].notDetected;
             }
             
-            // Añadir/quitar clase de detección con animación suave
             if (detected) {
                 element.classList.add('detected');
+                detectedCount++;
             } else {
                 element.classList.remove('detected');
             }
         }
     });
+    
+    // Actualizar gráfico circular
+    updateComplianceChart(detectedCount, totalEPP);
+    
+    // Actualizar información de detección
+    updateDetectionInfo(status, detectedCount, totalEPP);
+}
+
+/**
+ * Actualiza el gráfico circular de cumplimiento
+ */
+function updateComplianceChart(detected, total) {
+    const percentage = Math.round((detected / total) * 100);
+    const circumference = 2 * Math.PI * 60; // radio = 60
+    const progress = (percentage / 100) * circumference;
+    
+    progressCircle.style.strokeDasharray = `${progress} ${circumference}`;
+    progressText.textContent = `${percentage}%`;
+    
+    // Cambiar color según el porcentaje
+    if (percentage === 100) {
+        progressCircle.style.stroke = '#00d084'; // Verde
+    } else if (percentage >= 75) {
+        progressCircle.style.stroke = '#ff6b35'; // Naranja
+    } else {
+        progressCircle.style.stroke = '#ff4757'; // Rojo
+    }
+}
+
+/**
+ * Actualiza la información de detección en tiempo real
+ */
+function updateDetectionInfo(status, detectedCount, totalEPP) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    
+    if (status.persona) {
+        detectionIcon.textContent = '👤';
+        
+        if (detectedCount === totalEPP) {
+            detectionText.textContent = 'Persona con EPP completo';
+            detectionTime.textContent = `${timeString} - Registro N${detectionCount.total + 1} guardado`;
+            addActivityLog('success', 'Persona con EPP completo detectada');
+            detectionCount.complete++;
+        } else {
+            detectionText.textContent = 'Persona con EPP faltante';
+            detectionTime.textContent = `${timeString} - EPP incompleto detectado`;
+            addActivityLog('warning', `Persona con EPP faltante (${detectedCount}/${totalEPP} elementos)`);
+            detectionCount.incidents++;
+        }
+        
+        detectionCount.total++;
+    } else {
+        detectionIcon.textContent = '👁️';
+        detectionText.textContent = 'Esperando detección de persona';
+        detectionTime.textContent = `${timeString} - Monitoreando área`;
+    }
+    
+    updateSystemMetrics();
+}
+
+/**
+ * Añade una entrada al registro de actividad
+ */
+function addActivityLog(type, message) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit'
+    });
+    
+    const logItem = document.createElement('div');
+    logItem.className = `activity-item ${type}`;
+    logItem.innerHTML = `
+        <div class="activity-time">${timeString}</div>
+        <div class="activity-message">${message}</div>
+    `;
+    
+    activityLog.insertBefore(logItem, activityLog.firstChild);
+    
+    // Mantener solo las últimas 10 entradas
+    while (activityLog.children.length > 10) {
+        activityLog.removeChild(activityLog.lastChild);
+    }
+}
+
+/**
+ * Actualiza las métricas del sistema
+ */
+function updateSystemMetrics() {
+    document.getElementById('totalPersons').textContent = detectionCount.total;
+    document.getElementById('completeEPP').textContent = detectionCount.complete;
+    document.getElementById('incidents').textContent = detectionCount.incidents;
+    
+    // Calcular tiempo activo
+    const activeTime = new Date() - systemStartTime;
+    const hours = Math.floor(activeTime / 3600000);
+    const minutes = Math.floor((activeTime % 3600000) / 60000);
+    const seconds = Math.floor((activeTime % 60000) / 1000);
+    document.getElementById('activeTime').textContent = 
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Actualizar estados del sistema
+    document.getElementById('cameraState').textContent = currentSource === 'camera' ? 'Activa' : 'Inactiva';
+    document.getElementById('detectionState').textContent = detectionActive ? 'Activa' : 'Inactiva';
+    document.getElementById('recognitionState').textContent = recognitionActive ? 'Activo' : 'Inactivo';
 }
 
 /**
@@ -86,11 +214,12 @@ function toggleVideoDisplay(showVideo) {
 }
 
 /**
- * Actualiza los indicadores de estado (puntos de color)
+ * Actualiza los indicadores de estado
  */
 function updateStatusIndicators() {
     detectionIndicator.classList.toggle('active', detectionActive);
     recognitionIndicator.classList.toggle('active', recognitionActive);
+    cameraStatus.classList.toggle('active', currentSource === 'camera');
 }
 
 /**
@@ -105,17 +234,15 @@ function updateButtonStates() {
 /**
  * Muestra notificaciones al usuario
  */
-function showNotification(message, type = 'info', duration = 3000) {
+function showNotification(message, type = 'info', duration = 4000) {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
     
     document.body.appendChild(notification);
     
-    // Mostrar con animación
     setTimeout(() => notification.classList.add('show'), 100);
     
-    // Ocultar y remover
     setTimeout(() => {
         notification.classList.remove('show');
         setTimeout(() => notification.remove(), 400);
@@ -130,9 +257,8 @@ function resetEPPStatus() {
         casco: false,
         gafas: false,
         chaleco: false,
-        persona: false,
         guantes: false,
-        safe: false
+        persona: false
     };
     updateEPPStatus(resetStatus);
 }
@@ -165,7 +291,7 @@ async function apiRequest(endpoint, options = {}) {
  * Función para polling del estado de detección
  */
 async function pollDetectionStatus() {
-    if (!detectionActive || !currentSource) return;
+    if (!detectionActive) return;
     
     try {
         const response = await fetch(API_ENDPOINTS.getDetectionStatus);
@@ -198,6 +324,56 @@ function createFlashEffect() {
 
 // ====== EVENT LISTENERS ======
 
+// Dropdown del menú
+document.getElementById('menuBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const dropdown = document.querySelector('.dropdown');
+    dropdown.classList.toggle('show');
+});
+
+// Cerrar dropdown al hacer clic fuera
+document.addEventListener('click', () => {
+    const dropdown = document.querySelector('.dropdown');
+    dropdown.classList.remove('show');
+});
+
+// Opciones del menú
+document.getElementById('addPersonBtn').addEventListener('click', () => {
+    showNotification('Funcionalidad "Agregar Persona" en desarrollo', 'info');
+});
+
+document.getElementById('viewExcelBtn').addEventListener('click', async () => {
+    try {
+        const response = await fetch(API_ENDPOINTS.openExcel);
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Registro de asistencia abierto', 'success');
+            addActivityLog('info', 'Archivo de registros abierto');
+        } else {
+            showNotification('Error abriendo registros', 'error');
+        }
+    } catch (error) {
+        showNotification('Error de conexión', 'error');
+    }
+});
+
+document.getElementById('exportDataBtn').addEventListener('click', () => {
+    showNotification('Funcionalidad de exportación en desarrollo', 'info');
+});
+
+// Botón de refrescar
+document.getElementById('refreshBtn').addEventListener('click', async () => {
+    showNotification('Refrescando aplicación...', 'info');
+    
+    try {
+        await fetch(API_ENDPOINTS.resetSystem, { method: 'POST' });
+        location.reload();
+    } catch (error) {
+        showNotification('Error al refrescar', 'error');
+    }
+});
+
 // Botón 1: Cargar archivo
 document.getElementById('btnLoad').addEventListener('click', () => {
     fileInput.click();
@@ -221,13 +397,10 @@ fileInput.addEventListener('change', async (e) => {
         if (result.success) {
             currentSource = result.type;
             
-            // Si es imagen, mostrar directamente sin usar el stream
             if (result.type === 'image') {
                 videoFeed.src = result.url;
                 toggleVideoDisplay(true);
                 
-                // Para imágenes, el frame se procesa en el backend
-                // Solo necesitamos mostrar la imagen y actualizar estados periódicamente
                 setTimeout(() => {
                     if (detectionActive) {
                         pollDetectionStatus();
@@ -235,14 +408,15 @@ fileInput.addEventListener('change', async (e) => {
                 }, 1000);
                 
             } else {
-                // Para videos, usar el stream
                 videoFeed.src = API_ENDPOINTS.videoFeed + '?t=' + new Date().getTime();
                 toggleVideoDisplay(true);
             }
             
             showNotification(`${result.type === 'image' ? 'Imagen' : 'Video'} cargado correctamente`, 'success');
+            addActivityLog('info', `${result.type === 'image' ? 'Imagen' : 'Video'} cargado: ${result.filename}`);
             resetEPPStatus();
             updateButtonStates();
+            updateStatusIndicators();
             
         } else {
             showNotification(result.error || 'Error cargando archivo', 'error');
@@ -261,6 +435,7 @@ document.getElementById('btnExcel').addEventListener('click', async () => {
         
         if (result.success) {
             showNotification('Registro de asistencia abierto', 'success');
+            addActivityLog('info', 'Registro de asistencia consultado');
         } else {
             showNotification(result.error || 'Error abriendo Excel', 'error');
         }
@@ -287,6 +462,8 @@ document.getElementById('btnRecognition').addEventListener('click', async () => 
             recognitionActive ? 'success' : 'info'
         );
         
+        addActivityLog('info', `Reconocimiento facial ${recognitionActive ? 'activado' : 'desactivado'}`);
+        
     } catch (error) {
         showNotification('Error activando reconocimiento facial', 'error');
         console.error('Error:', error);
@@ -310,7 +487,8 @@ document.getElementById('btnDetection').addEventListener('click', async () => {
             detectionActive ? 'success' : 'info'
         );
         
-        // Si se desactiva la detección, resetear estados EPP
+        addActivityLog('info', `Detección EPP ${detectionActive ? 'activada' : 'desactivada'}`);
+        
         if (!detectionActive) {
             resetEPPStatus();
         }
@@ -336,6 +514,7 @@ document.getElementById('btnCapture').addEventListener('click', async () => {
         
         if (result.success) {
             showNotification(`Imagen capturada: ${result.filename}`, 'success');
+            addActivityLog('success', `Captura guardada: ${result.filename}`);
             createFlashEffect();
         } else {
             showNotification(result.error || 'Error capturando imagen', 'error');
@@ -350,7 +529,6 @@ document.getElementById('btnCapture').addEventListener('click', async () => {
 document.getElementById('btnCamera').addEventListener('click', async () => {
     try {
         if (currentSource === 'camera') {
-            // Desactivar cámara
             const response = await fetch(API_ENDPOINTS.stopCamera, {
                 method: 'POST'
             });
@@ -360,9 +538,9 @@ document.getElementById('btnCamera').addEventListener('click', async () => {
                 currentSource = null;
                 toggleVideoDisplay(false);
                 showNotification('Cámara desactivada', 'info');
+                addActivityLog('info', 'Cámara desactivada');
             }
         } else {
-            // Activar cámara
             const response = await fetch(API_ENDPOINTS.startCamera, {
                 method: 'POST'
             });
@@ -370,9 +548,10 @@ document.getElementById('btnCamera').addEventListener('click', async () => {
             
             if (result.success) {
                 currentSource = 'camera';
-                videoFeed.src = API_ENDPOINTS.videoFeed + '?t=' + new Date().getTime(); // Cache busting
+                videoFeed.src = API_ENDPOINTS.videoFeed + '?t=' + new Date().getTime();
                 toggleVideoDisplay(true);
                 showNotification('Cámara activada', 'success');
+                addActivityLog('success', 'Cámara activada correctamente');
                 resetEPPStatus();
             } else {
                 showNotification(result.error || 'Error activando cámara', 'error');
@@ -380,6 +559,7 @@ document.getElementById('btnCamera').addEventListener('click', async () => {
         }
         
         updateButtonStates();
+        updateStatusIndicators();
         
     } catch (error) {
         showNotification('Error con la cámara', 'error');
@@ -394,6 +574,7 @@ videoFeed.addEventListener('error', () => {
     toggleVideoDisplay(false);
     currentSource = null;
     updateButtonStates();
+    updateStatusIndicators();
     showNotification('Error en el stream de video', 'error');
 });
 
@@ -402,81 +583,6 @@ videoFeed.addEventListener('load', () => {
 });
 
 // ====== FUNCIONES DE INICIALIZACIÓN ======
-
-/**
- * Crea partículas animadas de fondo
- */
-function createParticles() {
-    const particlesContainer = document.getElementById('particles');
-    const particleCount = 50;
-    
-    for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 6 + 's';
-        particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
-        particlesContainer.appendChild(particle);
-    }
-}
-
-/**
- * Inicia el polling de estado de detección
- */
-function startStatusPolling() {
-    setInterval(pollDetectionStatus, 500); // Cada 500ms
-}
-
-/**
- * Añade tooltips mejorados
- */
-function setupTooltips() {
-    const tooltipElements = document.querySelectorAll('[title]');
-    tooltipElements.forEach(element => {
-        element.addEventListener('mouseenter', function(e) {
-            const tooltip = document.createElement('div');
-            tooltip.className = 'custom-tooltip';
-            tooltip.style.cssText = `
-                position: absolute;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                padding: 8px 12px;
-                border-radius: 6px;
-                font-size: 12px;
-                font-weight: 500;
-                z-index: 1001;
-                pointer-events: none;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                backdrop-filter: blur(10px);
-            `;
-            tooltip.textContent = this.title;
-            this.title = ''; // Remover title nativo
-            
-            document.body.appendChild(tooltip);
-            
-            const rect = this.getBoundingClientRect();
-            tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
-            tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
-            
-            setTimeout(() => tooltip.style.opacity = '1', 100);
-            
-            this.tooltipElement = tooltip;
-        });
-        
-        element.addEventListener('mouseleave', function() {
-            if (this.tooltipElement) {
-                this.tooltipElement.style.opacity = '0';
-                setTimeout(() => {
-                    if (this.tooltipElement) {
-                        this.tooltipElement.remove();
-                        this.tooltipElement = null;
-                    }
-                }, 300);
-            }
-        });
-    });
-}
 
 /**
  * Obtiene el estado inicial de la aplicación
@@ -503,13 +609,51 @@ async function getInitialState() {
     }
 }
 
+/**
+ * Inicia el polling de estado de detección
+ */
+function startStatusPolling() {
+    setInterval(() => {
+        if (detectionActive && currentSource) {
+            pollDetectionStatus();
+        }
+        updateSystemMetrics(); // Actualizar métricas cada segundo
+    }, 1000);
+}
+
+/**
+ * Resetea todo el sistema
+ */
+async function resetSystem() {
+    try {
+        await fetch(API_ENDPOINTS.resetSystem, { method: 'POST' });
+        
+        currentSource = null;
+        detectionActive = false;
+        recognitionActive = false;
+        
+        toggleVideoDisplay(false);
+        updateStatusIndicators();
+        updateButtonStates();
+        resetEPPStatus();
+        
+        // Resetear contadores
+        detectionCount = { total: 0, complete: 0, incidents: 0 };
+        updateSystemMetrics();
+        
+        showNotification('Sistema reiniciado correctamente', 'success');
+        addActivityLog('info', 'Sistema reiniciado');
+    } catch (error) {
+        console.error('Error reiniciando sistema:', error);
+        showNotification('Error reiniciando sistema', 'error');
+    }
+}
+
 // ====== MANEJO DE TECLADO ======
 
 document.addEventListener('keydown', (e) => {
-    // Evitar shortcuts si se está escribiendo en un input
     if (e.target.tagName === 'INPUT') return;
     
-    // Shortcuts de teclado para funcionalidad rápida
     switch(e.key) {
         case '1':
             document.getElementById('btnLoad').click();
@@ -530,65 +674,29 @@ document.addEventListener('keydown', (e) => {
             document.getElementById('btnCamera').click();
             break;
         case 'Escape':
-            // Resetear todo
             resetSystem();
+            break;
+        case 'r':
+        case 'R':
+            if (e.ctrlKey) {
+                e.preventDefault();
+                document.getElementById('refreshBtn').click();
+            }
             break;
     }
 });
 
-/**
- * Resetea todo el sistema
- */
-async function resetSystem() {
-    try {
-        await fetch('/reset_system', { method: 'POST' });
-        
-        currentSource = null;
-        detectionActive = false;
-        recognitionActive = false;
-        
-        toggleVideoDisplay(false);
-        updateStatusIndicators();
-        updateButtonStates();
-        resetEPPStatus();
-        
-        showNotification('Sistema reiniciado', 'info');
-    } catch (error) {
-        console.error('Error reiniciando sistema:', error);
-        showNotification('Error reiniciando sistema', 'error');
-    }
-}
-
 // ====== MANEJO DE REDIMENSIONAMIENTO ======
 
 window.addEventListener('resize', () => {
-    const isMobile = window.innerWidth <= 768;
+    const isMobile = window.innerWidth <= 1024;
     document.body.classList.toggle('mobile-view', isMobile);
-});
-
-// ====== MANEJO DE VISIBILIDAD DE PÁGINA ======
-
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        // Pausar polling cuando la página no es visible
-        console.log('Página oculta, pausando polling...');
-    } else {
-        // Reanudar polling cuando la página es visible
-        console.log('Página visible, reanudando polling...');
-        if (detectionActive && currentSource) {
-            pollDetectionStatus();
-        }
-    }
 });
 
 // ====== INICIALIZACIÓN DE LA APLICACIÓN ======
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🛡️ Iniciando Sistema EPP...');
-    
-    // Crear efectos visuales
-    createParticles();
-    setupTooltips();
+    console.log('🛡️ Iniciando Sistema EPP Corporativo...');
     
     // Obtener estado inicial del servidor
     await getInitialState();
@@ -597,22 +705,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateStatusIndicators();
     updateButtonStates();
     resetEPPStatus();
+    updateSystemMetrics();
     
     // Iniciar polling de estado
     startStatusPolling();
     
     // Detectar si es móvil
-    const isMobile = window.innerWidth <= 768;
+    const isMobile = window.innerWidth <= 1024;
     document.body.classList.toggle('mobile-view', isMobile);
     
     // Mensaje de bienvenida
     setTimeout(() => {
-        showNotification('🛡️ Sistema EPP iniciado correctamente', 'success', 4000);
+        showNotification('🛡️ Sistema EPP iniciado correctamente', 'success', 5000);
+        addActivityLog('success', 'Sistema iniciado correctamente');
     }, 1000);
     
-    console.log('✅ Sistema EPP cargado correctamente');
-    console.log('💡 Usa eppSystem en la consola para debugging');
-    console.log('⌨️ Shortcuts: 1-6 para botones, ESC para resetear');
+    console.log('✅ Sistema EPP Corporativo cargado');
+    console.log('⌨️ Shortcuts: 1-6 para botones, ESC para reset, Ctrl+R para refrescar');
 });
 
 // ====== EXPOSICIÓN DE FUNCIONES GLOBALES PARA DEBUGGING ======
@@ -624,12 +733,26 @@ window.eppSystem = {
     toggleVideoDisplay,
     updateStatusIndicators,
     updateButtonStates,
+    updateSystemMetrics,
     apiRequest,
     resetSystem,
     getInitialState,
+    addActivityLog,
     API_ENDPOINTS,
-    // Estados actuales
     get detectionActive() { return detectionActive; },
     get recognitionActive() { return recognitionActive; },
-    get currentSource() { return currentSource; }
+    get currentSource() { return currentSource; },
+    get detectionCount() { return detectionCount; }
 };
+
+// ====== AÑADIR ESTILOS DINÁMICOS ======
+
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes flashEffect {
+        0% { opacity: 0; }
+        50% { opacity: 1; }
+        100% { opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
