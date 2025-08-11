@@ -1,246 +1,117 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>App de detección de EPP</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alata:wght@400&display=swap" />
-    <link rel="stylesheet" href="static/css/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Detección EPP - Seguridad Industrial</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <div class="main-container">
-        <div class="section">
-            <span class="text">EQUIPO DE PROTECCIÓN PERSONAL</span>
+    <!-- Partículas de fondo -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Header -->
+    <div class="header fade-in">
+        🛡️ Sistema de Detección EPP y Reconocimiento Facial
+    </div>
+
+    <!-- Container principal -->
+    <div class="main-container fade-in">
+        <!-- Panel izquierdo - Estados EPP -->
+        <div class="side-panel">
+            <div class="epp-status" id="statusCasco">
+                <span class="epp-icon">⛑️</span>
+                <div class="epp-text">CASCO<br>NO DETECTADO</div>
+            </div>
+            <div class="epp-status" id="statusGafas">
+                <span class="epp-icon">🥽</span>
+                <div class="epp-text">GAFAS<br>NO DETECTADAS</div>
+            </div>
+            <div class="epp-status" id="statusChaleco">
+                <span class="epp-icon">🦺</span>
+                <div class="epp-text">CHALECO<br>NO DETECTADO</div>
+            </div>
         </div>
-        <div class="wrapper">
-            <div class="pic"></div>
-            <div class="box">
-                <div class="group"><span class="text-2"></span></div>
+
+        <!-- Panel central - Video -->
+        <div class="center-panel">
+            <div class="status-indicators">
+                <div class="status-dot" id="detectionIndicator" title="Detección EPP"></div>
+                <div class="status-dot" id="recognitionIndicator" title="Reconocimiento Facial"></div>
             </div>
-            <div class="section-2">
-                <div class="box-2"><span class="text-3"></span></div>
-            </div>
-            <div class="img">
-                <!-- Elementos dinámicos para mostrar imágenes o videos -->
-                <img id="displayImage" src="" alt="Visualización de Imagen" style="width: 945px; height: 570px; display: none;">
-                <video id="displayVideo" controls autoplay style="width: 945px; height: 570px; display: none;">
-                    <source id="videoSource" src="" type="video/mp4">
-                    Tu navegador no soporta el elemento de video.
-                </video>
-            </div>
-            <div class="group-5">
-                <!-- Botón con imagen para cargar archivo -->
-                <button class="wrapper-9" onclick="document.getElementById('fileInput').click()">
-                </button>
-                <!-- Input oculto -->
-                <form action="/cargar_archivo" method="POST" enctype="multipart/form-data" style="display: none;" id="uploadForm">
-                    <input type="file" id="fileInput" name="file" onchange="uploadFile()">
-                </form>                
-            </div>
-            <div class="pic-2"></div>
-            <div class="pic-3"></div>
-            <div class="box-3">
-                <div class="group-2"><span class="text-4"></span></div>
-            </div>
-            <div class="box-4">
-                <div class="wrapper-2"><span class="text-5"></span></div>
-            </div>
-            <div class="pic-4"></div>
-            <div class="wrapper-3">
-                <div class="wrapper-4"><span class="text-6"></span></div>
-            </div>
-            <div class="group-3">
-                <div class="section-3"><span class="text-7"></span></div>
-            </div>
-            <div class="pic-5"></div>
-            <div class="img-2"></div>
-            <div class="wrapper-5"><div class="wrapper-6"></div></div>
-            <div class="pic-6"></div>
-            <div class="wrapper-7">
-                <button class="box-5" onclick="accionBoton('guardar_captura')">
-                    <div class="group-4"><span class="text-8"></span></div>
-                </button>
-            </div>
-            <div class="box-6">
-                <button class="box-7" onclick="activarCamara()">
-                    <div class="wrapper-8">
+            
+            <div class="video-container">
+                <img id="videoFeed" src="{{ url_for('video_feed') }}" style="display: none;" alt="Video Feed">
+                <div class="placeholder" id="placeholder">
+                    <div class="placeholder-icon">📹</div>
+                    <div>Área de visualización de imágenes</div>
+                    <div style="font-size: 14px; opacity: 0.7; margin-top: 10px;">
+                        Cargue un archivo o active la cámara para comenzar
                     </div>
-                </button>
+                </div>
             </div>
-                
-            <div class="img-3"></div>
-            <div class="pic-7"></div>
-            <div class="group-6">
-                <button class="group-7" onclick="accionBoton('abrir_excel')">
-                    <div class="group-8"><span class="text-b"></span></div>
-                </button>
+        </div>
+
+        <!-- Panel derecho - Estados EPP adicionales -->
+        <div class="side-panel">
+            <div class="epp-status" id="statusPersona">
+                <span class="epp-icon">👤</span>
+                <div class="epp-text">PERSONA<br>NO DETECTADA</div>
             </div>
-            <div class="box-8">
-                <button class="wrapper-a" onclick="accionBoton('activar_reconocimiento')">
-                    <div class="section-5"><span class="text-c"></span></div>
-                </button>
+            <div class="epp-status" id="statusGuantes">
+                <span class="epp-icon">🧤</span>
+                <div class="epp-text">GUANTES<br>NO DETECTADOS</div>
             </div>
-            <div class="box-9">
-                <button class="wrapper-b" onclick="activarDetecciones()">
-                    <div class="wrapper-c"><span class="text-d"></span></div>
-                </button>
+            <div class="epp-status" id="statusSafe">
+                <span class="epp-icon">✅</span>
+                <div class="epp-text">SEGURO<br>NO CUMPLE</div>
             </div>
-            <div class="pic-8"></div>
-            <div class="img-4"></div>
-            <div class="img-5"></div>
         </div>
     </div>
 
-    <script>
-         let cameraStream = null; // Variable global para gestionar el stream de la cámara
+    <!-- Panel de controles -->
+    <div class="controls-panel fade-in">
+        <div class="controls-container">
+            <!-- Botón 1: Cargar archivo -->
+            <div class="control-btn" id="btnLoad" title="Cargar archivo de imagen o video">
+                <img src="{{ url_for('static', filename='images/cargar.png') }}" alt="Cargar" class="btn-icon">
+                <div class="btn-label">Cargar</div>
+                <input type="file" id="fileInput" accept="image/*,video/*">
+            </div>
+            
+            <!-- Botón 2: Abrir Excel -->
+            <div class="control-btn" id="btnExcel" title="Abrir registro de asistencia">
+                <img src="{{ url_for('static', filename='images/color.png') }}" alt="Excel" class="btn-icon">
+                <div class="btn-label">Excel</div>
+            </div>
+            
+            <!-- Botón 3: Reconocimiento facial -->
+            <div class="control-btn" id="btnRecognition" title="Activar/Desactivar reconocimiento facial">
+                <img src="{{ url_for('static', filename='images/gris.png') }}" alt="Reconocimiento" class="btn-icon">
+                <div class="btn-label">Rostros</div>
+            </div>
+            
+            <!-- Botón 4: Detección EPP -->
+            <div class="control-btn" id="btnDetection" title="Activar/Desactivar detección de EPP">
+                <img src="{{ url_for('static', filename='images/deteccion.png') }}" alt="Detección" class="btn-icon">
+                <div class="btn-label">EPP</div>
+            </div>
+            
+            <!-- Botón 5: Capturar -->
+            <div class="control-btn" id="btnCapture" title="Capturar imagen actual">
+                <img src="{{ url_for('static', filename='images/descarga.png') }}" alt="Capturar" class="btn-icon">
+                <div class="btn-label">Capturar</div>
+            </div>
+            
+            <!-- Botón 6: Cámara -->
+            <div class="control-btn" id="btnCamera" title="Activar cámara en tiempo real">
+                <img src="{{ url_for('static', filename='images/camara.png') }}" alt="Cámara" class="btn-icon">
+                <div class="btn-label">Cámara</div>
+            </div>
+        </div>
+    </div>
 
-        // Función para manejar la carga de archivos
-        function uploadFile() {
-            const form = document.getElementById("uploadForm");
-            const formData = new FormData(form);
-
-            fetch("/cargar_archivo", {
-                method: "POST",
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                const imageElement = document.getElementById("displayImage");
-                const videoElement = document.getElementById("displayVideo");
-                const videoSource = document.getElementById("videoSource");
-
-                if (data.type === "image") {
-                    imageElement.src = data.path;
-                    // Configura dimensiones específicas
-                    videoElement.style.width = "945px";
-                    videoElement.style.height = "570px";
-                    imageElement.style.display = "block";
-                    videoElement.style.display = "none";
-                } else if (data.type === "video") {
-                    videoSource.src = data.path;
-                    videoElement.load();
-                    // Configura dimensiones específicas
-                    videoElement.style.width = "945px";
-                    videoElement.style.height = "570px";
-                    videoElement.style.display = "block";
-                    imageElement.style.display = "none";
-                } else {
-                    alert("Formato no soportado.");
-                }
-            })
-            .catch(error => console.error("Error:", error));
-        }
-
-        // Función para manejar las acciones de botones
-        function accionBoton(action) {
-            fetch(`/${action}`, { method: "POST" })
-                .then(response => response.json())
-                .then(data => console.log(data))
-                .catch(error => console.error("Error:", error));
-        }
-        function activarCamara() {
-                const videoElement = document.getElementById("displayVideo");
-                const imageElement = document.getElementById("displayImage");
-
-                // Oculta la imagen y muestra el video
-                imageElement.style.display = "none";
-                videoElement.style.display = "block";
-
-                // Detener cualquier stream anterior
-                detenerStream();
-
-                // Solicita acceso a la cámara
-                navigator.mediaDevices
-                    .getUserMedia({ video: true })
-                    .then((stream) => {
-                        cameraStream = stream; // Asigna el stream de la cámara a la variable global
-                        videoElement.srcObject = stream; // Usa el stream como fuente del video
-                        videoElement.play(); // Inicia la transmisión de la cámara
-                    })
-                    .catch((error) => {
-                        console.error("Error al acceder a la cámara:", error);
-                        alert("No se pudo acceder a la cámara.");
-                    });
-            }
-
-            function reproducirVideo(path) {
-                const videoElement = document.getElementById("displayVideo");
-                const imageElement = document.getElementById("displayImage");
-
-                // Detener cualquier stream de la cámara
-                detenerStream();
-
-                // Oculta la imagen y muestra el video
-                imageElement.style.display = "none";
-                videoElement.style.display = "block";
-
-                // Limpia cualquier stream asignado al video
-                videoElement.srcObject = null;
-
-                // Carga el video
-                videoElement.src = path;
-                videoElement.load();
-                videoElement.play(); // Reproduce el video
-            }
-
-            function mostrarImagen(path) {
-                const videoElement = document.getElementById("displayVideo");
-                const imageElement = document.getElementById("displayImage");
-
-                // Detener cualquier stream de la cámara
-                detenerStream();
-
-                // Oculta el video y muestra la imagen
-                videoElement.style.display = "none";
-                imageElement.style.display = "block";
-                imageElement.src = path;
-            }
-
-            function detenerStream() {
-                // Detener el stream de la cámara si está activo
-                if (cameraStream) {
-                    cameraStream.getTracks().forEach((track) => track.stop());
-                    cameraStream = null; // Limpia la referencia al stream
-                }
-
-                // Limpia el video
-                const videoElement = document.getElementById("displayVideo");
-                videoElement.srcObject = null;
-                videoElement.src = ""; // Vacía la fuente del video
-                videoElement.pause(); // Asegúrate de pausar el video
-            }
-           
-            function activarDetecciones() {
-                fetch("/activar_deteccion", { method: "POST" })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.status);
-                        const isActivated = data.status.includes("activada");
-
-                        if (isActivated) {
-                            console.log("Detecciones activadas.");
-                            if (document.getElementById("displayImage").style.display === "block") {
-                                fetch("/procesar_imagen", { method: "POST" })
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        if (data.path) {
-                                            document.getElementById("displayImage").src = data.path;
-                                        }
-                                    });
-                            } else if (document.getElementById("displayVideo").style.display === "block") {
-                                document.getElementById("displayVideo").src = "/video_feed"; // Muestra el stream procesado
-                            }
-                        } else {
-                            console.log("Detecciones desactivadas.");
-                            if (document.getElementById("displayVideo").style.display === "block") {
-                                document.getElementById("displayVideo").src = ""; // Detiene el stream si está activo
-                            }
-                        }
-                    })
-                    .catch(error => console.error("Error:", error));
-            }
-
-    </script>
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
