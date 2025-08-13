@@ -47,7 +47,7 @@ def codificar_rostros(images):
 
 ### Detección de EPP
 
-El modelo YOLOv8 se utiliza para detectar el equipo de protección personal en la imagen o video. Se emplea un diccionario de clases y colores aleatorios para etiquetar cada objeto detectado en el frame.
+El modelo YOLOv11 se utiliza para detectar el equipo de protección personal en la imagen o video. Se emplea un diccionario de clases y colores aleatorios para etiquetar cada objeto detectado en el frame.
 
 ```python
 def dibujar_cajas(img, results):
