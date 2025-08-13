@@ -87,12 +87,36 @@ def horario(nombre):
     ws.append([nombre, fecha_actual, hora_actual])
     wb.save(archivo_excel)
 ```
+## 📋 Dataset
+Se emplearon imágenes existentes y se realizó etiquetado y segmentación propia para mejorar la precisión del modelo de detección. El dataset puede consultarse aquí: https://universe.roboflow.com/epp-h8rk4/epp-iohix/dataset/1502
 
 ## 🔭 Vista - Ejecución
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=_plYc9kN0sY">
     <img src="https://github.com/Jjmoreno24/Deteccion-de-EPP-en-area-de-Construccion/blob/8e8f4245ec47cfbfe79ac9b1dc548f87efccf985/Captura%20de%20pantalla%202025-02-19%20143809.png" alt="Video de demostración" width="600">
+  </a>
+</p>
+
+## 💻 Versión Flask (Web)
+
+Implementación web con Flask que expone el mismo núcleo de detección/reconocimiento a través de una interfaz HTML/CSS/JS. Gestiona cargas de archivos y cámara local, procesa frames en tiempo real y publica el resultado mediante un stream MJPEG consumido por el navegador.
+
+Arquitectura. La aplicación define directorios de trabajo (uploads/, Resultados/, Personal/), limita las cargas a 50 MB y mantiene un estado centralizado (origen activo, frame actual, hilo de cámara y un diccionario de cumplimiento de EPP con casco, gafas, chaleco, guantes, persona y safe). El servidor corre en modo threaded y cuenta con limpieza de recursos y manejo de errores.
+
+Flujo de procesamiento. Cada frame se normaliza a 640×480. Si el reconocimiento está activo, se codifican rostros y se comparan con las imágenes de Personal/; al coincidir, se registra en Horario.xlsx evitando duplicados diarios. Si la detección está activa, se ejecuta YOLOv11 con el umbral configurado y se actualizan los indicadores EPP. Sobre el frame se dibujan cajas y etiquetas (verde = presente, rojo = faltante) y se envía al cliente vía MJPEG.
+
+Orígenes soportados.
+
+- **Imagen subida**: se procesa inmediatamente y se fija como frame actual.
+
+- **Video subido**: se procesa con un hilo dedicado a ~30 FPS.
+
+- **Cámara local**: se intenta abrir 0/1/2, se configura resolución/FPS y se inicia.
+
+<p align="center">
+  <a href="https://tu-dominio.com">
+    <img src="RUTA/A/TU/CAPTURA.png" alt="Abrir demo" width="600">
   </a>
 </p>
 
