@@ -114,11 +114,9 @@ Orígenes soportados.
 
 - **Cámara local**: se intenta abrir 0/1/2, se configura resolución/FPS y se inicia.
 
-<p align="center">
-  <a href="https://tu-dominio.com">
-    <img src="RUTA/A/TU/CAPTURA.png" alt="Abrir demo" width="600">
-  </a>
-</p>
+## [🔗 Entrar a la demo](https://tu-dominio.com)
+
+<img width="1914" height="991" alt="Captura de pantalla 2025-08-12 233427" src="https://github.com/user-attachments/assets/2419fa16-89bb-4c8d-93b6-6442d7004eb9" />
 
 <div align="center">
 <h3 align="center">Contacto 😋</h3>
