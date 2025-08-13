@@ -9,18 +9,14 @@
     --text: #ffffff;
     --text-dim: #a0a0a0;
     --red: #dc2626;
-    --red-light: #ef4444;
     --green: #059669;
-    --green-light: #10b981;
     --orange: #ea580c;
-    --orange-light: #f97316;
     --blue: #2563eb;
-    --blue-light: #3b82f6;
 }
 
 /* ===== RESET ===== */
 * {
-    margin: 0;
+    margin: -2px;
     padding: 0;
     box-sizing: border-box;
 }
@@ -32,7 +28,7 @@ body {
     height: 100vh;
     overflow: hidden;
     display: grid;
-    grid-template-rows: 60px 1fr 80px;
+    grid-template-rows: 55px 1fr 75px;
 }
 
 /* ===== HEADER ===== */
@@ -52,7 +48,7 @@ body {
 .header-title {
     flex: 1;
     text-align: center;
-    font-size: 18px;
+    font-size: 25px;
     font-weight: 600;
 }
 
@@ -60,12 +56,13 @@ body {
     display: flex;
     gap: 10px;
     width: 100px;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    align-items: center;
 }
 
 .header-btn {
-    width: 36px;
-    height: 36px;
+    width: 46px;
+    height: 46px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -75,7 +72,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    font-size: 16px;
+    font-size: 23px;
 }
 
 .header-btn:hover {
@@ -134,9 +131,9 @@ body {
 /* ===== MAIN CONTAINER ===== */
 .container {
     display: grid;
-    grid-template-columns: 240px 1fr 240px;
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: 220px 1fr 220px;
+    gap: 16px;
+    padding: 16px;
     height: 100%;
     overflow: hidden;
 }
@@ -145,19 +142,19 @@ body {
 .left-panel {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
 }
 
 .epp-item {
     background: var(--red);
-    border: 2px solid var(--red-light);
+    border: 2px solid #ef4444;
     border-radius: 12px;
-    padding: 16px;
+    padding: 12px;
     text-align: center;
     color: white;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s ease;
     cursor: pointer;
-    flex: 1;
+    height: calc((100vh - 200px) / 4);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -183,7 +180,7 @@ body {
 
 .epp-item.detected {
     background: var(--green);
-    border-color: var(--green-light);
+    border-color: #10b981;
     box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
     animation: pulseGreen 2s infinite;
 }
@@ -200,8 +197,8 @@ body {
 }
 
 .epp-icon {
-    font-size: 28px;
-    margin-bottom: 8px;
+    font-size: 40px;
+    margin-bottom: 6px;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
 }
 
@@ -217,7 +214,7 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -261,6 +258,7 @@ body {
     justify-content: center;
     overflow: hidden;
     border: 1px solid var(--border);
+    min-height: 200px;
 }
 
 #videoFeed {
@@ -272,6 +270,7 @@ body {
 .placeholder {
     text-align: center;
     color: var(--text-dim);
+    padding: 20px;
 }
 
 .placeholder-icon {
@@ -294,7 +293,7 @@ body {
 .right-panel {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 
 .chart-section {
@@ -303,6 +302,7 @@ body {
     border-radius: 12px;
     padding: 16px;
     text-align: center;
+    height: 160px;
 }
 
 .chart-section h3 {
@@ -314,15 +314,15 @@ body {
 
 .chart-container {
     position: relative;
-    width: 100px;
-    height: 100px;
-    margin: 0 auto 12px;
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 10px;
 }
 
 .chart-text {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 55%;
+    left: 57%;
     transform: translate(-50%, -50%);
     font-size: 18px;
     font-weight: 700;
@@ -340,7 +340,8 @@ body {
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px;
-    height: 600px; /* ALTURA FIJA */
+    height: calc(100vh - 320px);
+    min-height: 150px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -351,7 +352,7 @@ body {
     margin-bottom: 12px;
     color: var(--text);
     font-weight: 600;
-    flex-shrink: 0; /* No comprimir título */
+    flex-shrink: 0;
 }
 
 .log-container {
@@ -388,7 +389,7 @@ body {
     margin-bottom: 6px;
     border-left: 3px solid var(--blue);
     font-size: 11px;
-    flex-shrink: 0; /* No comprimir items */
+    flex-shrink: 0;
 }
 
 .log-item.success {
@@ -420,22 +421,22 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 24px;
+    gap: 20px;
     padding: 16px;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
 }
 
 .control-btn {
-    width: 52px;
-    height: 52px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--orange), var(--orange-light));
+    background: linear-gradient(135deg, var(--orange), #f97316);
     border: 2px solid rgba(255,255,255,0.3);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     position: relative;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
@@ -464,7 +465,7 @@ body {
 }
 
 .control-btn.active {
-    background: linear-gradient(135deg, var(--green), var(--green-light));
+    background: linear-gradient(135deg, var(--green), #10b981);
     box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
     animation: activeBtn 2s infinite;
 }
@@ -488,7 +489,7 @@ body {
 /* ===== NOTIFICATIONS ===== */
 .notification {
     position: fixed;
-    top: 80px;
+    top: 75px;
     right: 20px;
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -525,17 +526,18 @@ body {
     .container {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto auto;
-        gap: 16px;
     }
     
     .left-panel {
         flex-direction: row;
         gap: 12px;
+        overflow-x: auto;
     }
     
     .epp-item {
-        flex: 1;
-        min-height: 80px;
+        min-width: 100px;
+        flex-shrink: 0;
+        height: 80px;
     }
     
     .right-panel {
@@ -545,29 +547,17 @@ body {
     
     .chart-section, .log-section {
         flex: 1;
-    }
-    
-    .log-section {
-        height: 200px;
+        height: 150px;
     }
 }
 
 @media (max-width: 768px) {
     body {
-        grid-template-rows: 50px 1fr 70px;
-    }
-    
-    .header {
-        padding: 0 16px;
+        grid-template-rows: 50px 1fr 65px;
     }
     
     .header-title {
         font-size: 16px;
-    }
-    
-    .container {
-        padding: 16px;
-        gap: 12px;
     }
     
     .control-btn {
@@ -583,5 +573,10 @@ body {
     .controls {
         gap: 16px;
         padding: 12px;
+    }
+    
+    .container {
+        padding: 12px;
+        gap: 12px;
     }
 }
